@@ -1,0 +1,6 @@
+{
+    "input_path": "Data/in_data_1752.csv",
+    "output_path": "Data/out_data_1752.csv",
+    "n_steps": 5,
+    "epochs": 50
+}
