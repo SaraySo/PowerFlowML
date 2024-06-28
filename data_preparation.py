@@ -44,4 +44,7 @@ def load_and_prepare_data(input_path, output_path, n_steps):
     X_train_flattened = X_train.reshape((X_train.shape[0], X_train.shape[1] * X_train.shape[2]))
     X_test_flattened = X_test.reshape((X_test.shape[0], X_test.shape[1] * X_test.shape[2]))
 
+    print(f"Shape of X_train_flattened: {X_train_flattened.shape}")
+    print(f"Shape of X_test_flattened: {X_test_flattened.shape}")
+
     return X_train, X_test, y_train, y_test, X_train_flattened, X_test_flattened, df_target_clean.shape[1]

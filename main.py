@@ -1,79 +1,47 @@
-import json
-import data_preparation
-import dnn_model
-import lstm_model
-import matplotlib.pyplot as plt
+import argparse
 import numpy as np
+import plot_results
+from train_model import run_model  # Ensure run_model is imported
 
+def plot_results_main(y_test, y_pred_fnn=None, y_pred_lstm=None):
+    plot_results.plot_predictions(y_test, y_pred_fnn, y_pred_lstm)
+    plot_results.plot_accuracy(y_test, y_pred_fnn, y_pred_lstm)
 
-def load_config(config_path):
-    with open(config_path, 'r') as file:
-        config = json.load(file)
-    return config
+def plot_loss(model_name):
+    import matplotlib.pyplot as plt
 
+    history = np.load(f"{model_name}_history.npy", allow_pickle=True).item()
 
-def main():
-    config = load_config('config.json')
-
-    X_train, X_test, y_train, y_test, X_train_flattened, X_test_flattened, output_shape = data_preparation.load_and_prepare_data(
-        config['input_path'], config['output_path'], config['n_steps'])
-
-    # Train DNN
-    dnn = dnn_model.build_dnn_model(X_train_flattened.shape[1], output_shape)
-    dnn, mse_dnn = dnn_model.train_dnn_model(dnn, X_train_flattened, y_train, X_test_flattened, y_test,
-                                             config['epochs'])
-
-    # Train LSTM
-    lstm = lstm_model.build_lstm_model((X_train.shape[1], X_train.shape[2]), output_shape)
-    lstm, mse_lstm = lstm_model.train_lstm_model(lstm, X_train, y_train, X_test, y_test, config['epochs'])
-
-    print("MSE for LSTM:", mse_lstm)
-    print("MSE for DNN:", mse_dnn)
-
-    # Predict and plot
-    y_pred_lstm = lstm.predict(X_test)
-    y_pred_dnn = dnn.predict(X_test_flattened)
-
-    plt.figure(figsize=(14, 7))
-
-    plt.subplot(1, 2, 1)
-    plt.plot(y_test)
-    plt.plot(y_pred_lstm)
-    plt.title('Comparison of LSTM Predictions and Actual Data')
-    plt.xlabel('Time Steps')
-    plt.ylabel('Normalized Values')
+    plt.figure(figsize=(10, 6))
+    plt.plot(history['loss'], label='Training Loss')
+    plt.plot(history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss Over Epochs')
     plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(y_test)
-    plt.plot(y_pred_dnn)
-    plt.title('Comparison of DNN Predictions and Actual Data')
-    plt.xlabel('Time Steps')
-    plt.ylabel('Normalized Values')
-    plt.legend()
-
-    plt.tight_layout()
     plt.show()
-
-    plt.figure(figsize=(12, 6))
-
-    plt.subplot(1, 2, 1)
-    plt.scatter(y_test, y_pred_lstm, alpha=0.5, color='red')
-    plt.plot([np.min(y_test), np.max(y_test)], [np.min(y_test), np.max(y_test)], 'k--', lw=2)
-    plt.title('LSTM Prediction Accuracy')
-    plt.xlabel('Actual Values')
-    plt.ylabel('Predicted Values')
-
-    plt.subplot(1, 2, 2)
-    plt.scatter(y_test, y_pred_dnn, alpha=0.5, color='green')
-    plt.plot([np.min(y_test), np.max(y_test)], [np.min(y_test), np.max(y_test)], 'k--', lw=2)
-    plt.title('DNN Prediction Accuracy')
-    plt.xlabel('Actual Values')
-    plt.ylabel('Predicted Values')
-
-    plt.tight_layout()
-    plt.show()
-
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run neural network training and evaluation.")
+    parser.add_argument("task", type=str, help="The task to perform: 'train', 'plot', or 'plot_loss'")
+    parser.add_argument("--models", type=str, nargs='+', help="The names of the models to run (e.g., 'FNN_2L_50N' 'LSTM_1L_50U')", required=False)
+    args = parser.parse_args()
+
+    if args.task == "train" and args.models:
+        for model_name in args.models:
+            y_test, y_pred, history = run_model(model_name)
+            # Save predictions and true values for later plotting
+            np.save(f"{model_name}_y_test.npy", y_test)
+            np.save(f"{model_name}_y_pred.npy", y_pred)
+    elif args.task == "plot" and args.models:
+        y_test = np.load(f"{args.models[0]}_y_test.npy")
+        y_pred_fnn = np.load(f"{args.models[0]}_y_pred.npy") if "fnn" in args.models[0].lower() else None
+        y_pred_lstm = np.load(f"{args.models[0]}_y_pred.npy") if "lstm" in args.models[0].lower() else None
+        if len(args.models) > 1:
+            y_pred_fnn = np.load(f"{args.models[1]}_y_pred.npy") if "fnn" in args.models[1].lower() else y_pred_fnn
+            y_pred_lstm = np.load(f"{args.models[1]}_y_pred.npy") if "lstm" in args.models[1].lower() else y_pred_lstm
+        plot_results_main(y_test, y_pred_fnn, y_pred_lstm)
+    elif args.task == "plot_loss" and args.models:
+        plot_loss(args.models[0])
+    else:
+        print("Please provide a valid task and model names.")

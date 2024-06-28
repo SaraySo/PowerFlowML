@@ -1,6 +1,34 @@
 {
-    "input_path": "Data/in_data_1752.csv",
-    "output_path": "Data/out_data_1752.csv",
-    "n_steps": 5,
-    "epochs": 50
+    "FNN": {
+        "input_path": "8 years data/input-output files/input_only.csv",
+        "output_path": "8 years data/input-output files/output_only.csv",
+        "n_steps": 5,
+        "epochs": 50,
+        "learning_rate": 0.001,
+        "loss_function": "mse",
+        "hidden_layers": [2, 2],
+        "activation": "relu",
+        "output_size": 10
+    },
+    "FNN_2L_50N": {
+        "input_path": "Data/in_data_1752.csv",
+        "output_path": "Data/out_data_1752.csv",
+        "n_steps": 5,
+        "epochs": 50,
+        "learning_rate": 0.001,
+        "loss_function": "mse",
+        "hidden_layers": [50, 50],
+        "activation": "relu",
+        "output_size": 10
+    },
+    "LSTM_1L_50U": {
+        "input_path": "Data/in_data_1752.csv",
+        "output_path": "Data/out_data_1752.csv",
+        "n_steps": 5,
+        "epochs": 50,
+        "learning_rate": 0.001,
+        "loss_function": "mse",
+        "units": 50,
+        "output_size": 10
+    }
 }
